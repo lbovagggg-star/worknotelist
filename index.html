@@ -6,7 +6,6 @@
 <title>업무 체크리스트</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style>
   body {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
@@ -200,33 +199,9 @@
     { id: 2, text: '자재 물량 산출 검토', description: '', date: getTodayDate(), rawDate: getRawDate(), isCompleted: false, type: 'daily' }
   ];
 
-  // 💡 암호화에 사용할 비밀키 (원하시는 문자열로 변경하셔도 됩니다)
-  const SECRET_KEY = "my_secure_checklist_key_!@#"; 
-
   const savedTasks = localStorage.getItem('myChecklistTasks');
-  let tasks = defaultTasks;
+  let tasks = savedTasks ? JSON.parse(savedTasks) : defaultTasks;
   
-  if (savedTasks) {
-    try {
-      // 1. 암호화된 데이터 복호화 시도
-      const bytes = CryptoJS.AES.decrypt(savedTasks, SECRET_KEY);
-      const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
-      
-      if (decryptedData) {
-        tasks = JSON.parse(decryptedData);
-      } else {
-        // 2. 만약 기존에 암호화되지 않은 평문 데이터가 있었다면 그대로 처리
-        tasks = JSON.parse(savedTasks);
-      }
-    } catch (e) {
-      try {
-        tasks = JSON.parse(savedTasks);
-      } catch(err) {
-        tasks = defaultTasks;
-      }
-    }
-  }
-
   tasks = tasks.map(t => {
     if(!t.rawDate) t.rawDate = getRawDate();
     if(t.description === undefined) t.description = ""; // 💡 기존 데이터에 description이 없으면 빈칸 처리
@@ -239,9 +214,7 @@
   let currentEditingId = null; // 💡 현재 팝업에서 수정 중인 업무 ID
 
   function saveTasksToStorage() {
-    const jsonString = JSON.stringify(tasks);
-    const encryptedData = CryptoJS.AES.encrypt(jsonString, SECRET_KEY).toString();
-    localStorage.setItem('myChecklistTasks', encryptedData);
+    localStorage.setItem('myChecklistTasks', JSON.stringify(tasks));
   }
 
   // 엑셀 저장 시 '부가 설명' 포함
